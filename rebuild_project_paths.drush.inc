@@ -72,4 +72,5 @@ function drush_rebuild_project_paths() {
       }
       unset($modpath_arr);
     }
-  }}
+  }  
+}

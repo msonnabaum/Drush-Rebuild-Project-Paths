@@ -41,18 +41,35 @@ function rebuild_project_paths_drush_help($section) {
  * Command callback for drush rebuild-project-paths
  */
 function drush_rebuild_project_paths() {
-  $result = db_query('SELECT filename, name FROM {system}');
-
-  while ($mod = db_fetch_array($result)) {
-    exec('find . -name ' . basename($mod['filename']), $modpath_arr);
-    if (count($modpath_arr) == 1) {
-      $modpath = ltrim($modpath_arr[0], './');
-      $dbpath = $mod['filename'];
-      if ($dbpath != $modpath) {
-        drush_print("Updating " . $mod['name']. "'s path");
-        db_query("UPDATE system SET filename='%s' WHERE name='%s'", $modpath, $mod['name']);
+  if (version_compare(VERSION, '7.0.0', '<')) {
+    $result = db_query('SELECT filename, name FROM {system}');
+    
+    while ($mod = db_fetch_array($result)) {
+      exec('find . -name ' . basename($mod['filename']), $modpath_arr);
+      if (count($modpath_arr) == 1) {
+        $modpath = ltrim($modpath_arr[0], './');
+        $dbpath = $mod['filename'];
+        if ($dbpath != $modpath) {
+          drush_print("Updating " . $mod['name']. "'s path");
+          db_query("UPDATE system SET filename='%s' WHERE name='%s'", $modpath, $mod['name']);
+        }
       }
+      unset($modpath_arr);
     }
-    unset($modpath_arr);
   }
-}
+  else {
+    $result = db_query("SELECT filename, name FROM {system}",array(),array('fetch' => 'PDO::FETCH_ASSOC'));
+    
+    foreach ($result as $mod) {
+      exec('find . -name ' . basename($mod['filename']), $modpath_arr);
+      if (count($modpath_arr) == 1) {
+        $modpath = ltrim($modpath_arr[0], './');
+        $dbpath = $mod['filename'];
+        if ($dbpath != $modpath) {
+          drush_print("Updating " . $mod['name']. "'s path");
+          db_query("UPDATE system SET filename='%s' WHERE name='%s'", $modpath, $mod['name']);
+        }
+      }
+      unset($modpath_arr);
+    }
+  }}
